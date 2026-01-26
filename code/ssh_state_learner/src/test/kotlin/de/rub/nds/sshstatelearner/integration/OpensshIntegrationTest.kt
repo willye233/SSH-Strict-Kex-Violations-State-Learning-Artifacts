@@ -7,11 +7,13 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.time.Duration
 
+@Tag("integration")
 class OpensshIntegrationTest {
     companion object {
         private const val COMPOSE_FILE = "code/impl/openssh/docker-compose.yml"
