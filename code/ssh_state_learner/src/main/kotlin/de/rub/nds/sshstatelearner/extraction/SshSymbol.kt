@@ -66,6 +66,7 @@ import de.rub.nds.sshattacker.core.protocol.transport.message.DisconnectMessage
 import de.rub.nds.sshattacker.core.protocol.transport.message.EcdhKeyExchangeInitMessage
 import de.rub.nds.sshattacker.core.protocol.transport.message.EcdhKeyExchangeReplyMessage
 import de.rub.nds.sshattacker.core.protocol.transport.message.ExtensionInfoMessage
+import de.rub.nds.sshattacker.core.protocol.transport.message.extension.UnknownExtension
 import de.rub.nds.sshattacker.core.protocol.transport.message.HybridKeyExchangeInitMessage
 import de.rub.nds.sshattacker.core.protocol.transport.message.HybridKeyExchangeReplyMessage
 import de.rub.nds.sshattacker.core.protocol.transport.message.IgnoreMessage
@@ -101,12 +102,45 @@ enum class SshSymbol(val messageId: UByte?, val messageConstructor: (SshContext?
     MSG_KEX_ECDH_INIT(MessageIdConstant.SSH_MSG_KEX_ECDH_INIT, { EcdhKeyExchangeInitMessage() }),
     MSG_KEX_ECDH_REPLY(MessageIdConstant.SSH_MSG_KEX_ECDH_REPLY, { EcdhKeyExchangeReplyMessage() }),
     MSG_EXT_INFO(MessageIdConstant.SSH_MSG_EXT_INFO, { ExtensionInfoMessage() }),
+    MSG_EXT_INFO_STRICT_KEX_CLIENT(MessageIdConstant.SSH_MSG_EXT_INFO, {
+        ExtensionInfoMessage().apply {
+            val ext = UnknownExtension()
+            ext.setName("kex-strict-c-v00@openssh.com", true)
+            ext.setValue(ByteArray(0), true)
+            addExtension(ext)
+            setExtensionCount(1)
+        }
+    }),
+    MSG_EXT_INFO_STRICT_KEX_SERVER(MessageIdConstant.SSH_MSG_EXT_INFO, {
+        ExtensionInfoMessage().apply {
+            val ext = UnknownExtension()
+            ext.setName("kex-strict-s-v00@openssh.com", true)
+            ext.setValue(ByteArray(0), true)
+            addExtension(ext)
+            setExtensionCount(1)
+        }
+    }),
     MSG_KEX_HBR_INIT(MessageIdConstant.SSH_MSG_HBR_INIT, { HybridKeyExchangeInitMessage() }),
     MSG_KEX_HBR_REPLY(MessageIdConstant.SSH_MSG_HBR_REPLY, { HybridKeyExchangeReplyMessage() }),
     MSG_IGNORE(MessageIdConstant.SSH_MSG_IGNORE, { IgnoreMessage() }),
+    MSG_IGNORE_MAXIMUM(MessageIdConstant.SSH_MSG_IGNORE, {
+        IgnoreMessage().apply {
+            setData(ByteArray(32768) { 0 }, true)
+        }
+    }),
+    MSG_IGNORE_SMALL(MessageIdConstant.SSH_MSG_IGNORE, { IgnoreMessage() }),
+    MSG_MULTIPLE_RAPID_IGNORE(MessageIdConstant.SSH_MSG_IGNORE, { IgnoreMessage() }),
     MSG_KEXINIT(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
+    MSG_KEXINIT_STRICT_KEX_CLIENT(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
+    MSG_KEXINIT_STRICT_KEX_SERVER(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
+    MSG_KEXINIT_REPEATED(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
+    MSG_KEXINIT_INCOMPATIBLE(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
     MSG_NEWCOMPRESS(MessageIdConstant.SSH_MSG_NEWCOMPRESS, { NewCompressMessage() }),
     MSG_NEWKEYS(MessageIdConstant.SSH_MSG_NEWKEYS, { NewKeysMessage() }),
+    MSG_PREMATURE_NEWKEYS(MessageIdConstant.SSH_MSG_NEWKEYS, { NewKeysMessage() }),
+    MSG_DUPLICATE_NEWKEYS(MessageIdConstant.SSH_MSG_NEWKEYS, { NewKeysMessage() }),
+    MSG_LATE_KEXINIT(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
+    MSG_OUT_OF_ORDER_KEX(MessageIdConstant.SSH_MSG_KEXINIT, { KeyExchangeInitMessage() }),
     MSG_PING_OPENSSH(MessageIdConstant.SSH_MSG_PING, { PingOpenSshMessage() }),
     MSG_PONG_OPENSSH(MessageIdConstant.SSH_MSG_PONG, { PongOpenSshMessage() }),
     MSG_KEX_RSA_DONE(MessageIdConstant.SSH_MSG_KEXRSA_DONE, { RsaKeyExchangeDoneMessage() }),
@@ -131,6 +165,12 @@ enum class SshSymbol(val messageId: UByte?, val messageConstructor: (SshContext?
         }
     }),
     MSG_VERSION_EXCHANGE(null, { VersionExchangeMessage() }),
+
+    /* Undefined / reserved message IDs useful for fuzzing */
+    MSG_UNDEFINED_BLOCK_2(23.toUByte(), { UnknownMessage().apply { messageId = Modifiable.explicit(23.toByte()) } }),
+    MSG_UNDEFINED_BLOCK_3(35.toUByte(), { UnknownMessage().apply { messageId = Modifiable.explicit(35.toByte()) } }),
+    MSG_UNDEFINED_BLOCK_4(42.toUByte(), { UnknownMessage().apply { messageId = Modifiable.explicit(42.toByte()) } }),
+    MSG_UNDEFINED_BLOCK_9(110.toUByte(), { UnknownMessage().apply { messageId = Modifiable.explicit(110.toByte()) } }),
 
     /*
      * SSH authentication protocol symbols
