@@ -332,4 +332,37 @@
         <sourceDirectory>src/main/kotlin</sourceDirectory>
         <testSourceDirectory>src/test/kotlin</testSourceDirectory>
     </build>
+        <profiles>
+            <profile>
+                <id>integration-tests</id>
+                <build>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-failsafe-plugin</artifactId>
+                            <version>3.5.3</version>
+                            <executions>
+                                <execution>
+                                    <id>integration-test</id>
+                                    <goals>
+                                        <goal>integration-test</goal>
+                                    </goals>
+                                </execution>
+                                <execution>
+                                    <id>verify</id>
+                                    <goals>
+                                        <goal>verify</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                            <configuration>
+                                <includes>
+                                    <include>**/*IntegrationTest*.class</include>
+                                </includes>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </build>
+            </profile>
+        </profiles>
 </project>
