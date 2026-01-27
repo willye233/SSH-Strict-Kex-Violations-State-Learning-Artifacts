@@ -16,7 +16,8 @@ import java.time.Duration
 @Tag("integration")
 class OpensshIntegrationTest {
     companion object {
-        private const val COMPOSE_FILE = "code/impl/openssh/docker-compose.yml"
+        // When Maven runs in the module directory, resolve compose file relative to module
+        private const val COMPOSE_FILE = "../impl/openssh/docker-compose.yml"
         private const val HOST = "127.0.0.1"
         private const val PORT = 30020
 
