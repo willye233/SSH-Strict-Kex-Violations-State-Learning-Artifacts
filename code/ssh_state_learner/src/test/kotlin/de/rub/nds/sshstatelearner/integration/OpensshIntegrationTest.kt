@@ -21,7 +21,8 @@ class OpensshIntegrationTest {
         // When Maven runs in the module directory, resolve compose file relative to module
         private const val COMPOSE_FILE = "../impl/openssh/docker-compose.yml"
         private const val HOST = "127.0.0.1"
-        private const val PORT = 30020
+        private const val PORT_START = 30020
+        private const val PORT_END = 30035
 
         @BeforeAll
         @JvmStatic
@@ -65,9 +66,10 @@ class OpensshIntegrationTest {
 
     @Test
     fun testSendIgnoreAndExtInfo() {
-        // Wait for the OpenSSH service to be reachable before constructing the SUL
-        Assumptions.assumeTrue(waitForPort(HOST, PORT, 30), "OpenSSH not reachable on $HOST:$PORT; skipping integration test")
-        val sul = NetworkSshServerSul("openssh-test", HOST, PORT)
+        // Wait for the OpenSSH service to be reachable on any mapped host port in the compose range
+        val port = waitForPortRange(HOST, PORT_START, PORT_END, 30)
+        Assumptions.assumeTrue(port > 0, "OpenSSH not reachable on $HOST:$PORT_START-$PORT_END; skipping integration test")
+        val sul = NetworkSshServerSul("openssh-test", HOST, port)
         try {
             sul.pre()
 
@@ -95,5 +97,20 @@ class OpensshIntegrationTest {
             }
         }
         return false
+    }
+
+    private fun waitForPortRange(host: String, startPort: Int, endPort: Int, timeoutSeconds: Long): Int {
+        val deadline = Instant.now().plusSeconds(timeoutSeconds)
+        while (Instant.now().isBefore(deadline)) {
+            for (p in startPort..endPort) {
+                try {
+                    Socket(host, p).use { socket -> return p }
+                } catch (_: Exception) {
+                    // try next port
+                }
+            }
+            Thread.sleep(500)
+        }
+        return -1
     }
 }
