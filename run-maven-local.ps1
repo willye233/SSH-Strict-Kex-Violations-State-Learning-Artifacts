@@ -2,7 +2,8 @@
 param(
     [string]$MavenVersion = '3.9.4',
     [string]$ModulePath = 'code\\ssh_state_learner',
-    [string]$Test = 'SshSymbolConstructorTest'
+    [string]$Test = 'SshSymbolConstructorTest',
+    [string]$AdditionalArgs = ''
 )
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Definition
@@ -36,7 +37,13 @@ if (-not (Test-Path $mvnCmd)) {
 $moduleFull = Join-Path $root $ModulePath
 Set-Location $moduleFull
 Write-Host "Running tests in $moduleFull ..."
-& $mvnCmd "-Dtest=$Test" "test"
+if ([string]::IsNullOrEmpty($AdditionalArgs)) {
+    & $mvnCmd "-Dtest=$Test" "test"
+} else {
+    # Split additional args into array for correct invocation
+    $argsArray = $AdditionalArgs -split ' '
+    & $mvnCmd @argsArray
+}
 
 # exit with the process exit code
 exit $LASTEXITCODE
