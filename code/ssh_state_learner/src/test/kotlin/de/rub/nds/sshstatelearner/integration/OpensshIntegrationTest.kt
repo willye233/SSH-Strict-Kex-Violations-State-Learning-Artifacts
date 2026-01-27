@@ -35,7 +35,7 @@ class OpensshIntegrationTest {
             Assumptions.assumeTrue(started, "Docker is not available or compose failed; skipping integration tests")
 
             // wait a short while for the service to become reachable
-            Thread.sleep(Duration.ofSeconds(3).toMillis())
+            Thread.sleep(Duration.ofSeconds(5).toMillis())
         }
 
         @AfterAll
@@ -67,7 +67,7 @@ class OpensshIntegrationTest {
     @Test
     fun testSendIgnoreAndExtInfo() {
         // Wait for the OpenSSH service to be reachable on any mapped host port in the compose range
-        val port = waitForPortRange(HOST, PORT_START, PORT_END, 30)
+        val port = waitForPortRange(HOST, PORT_START, PORT_END, 120)
         Assumptions.assumeTrue(port > 0, "OpenSSH not reachable on $HOST:$PORT_START-$PORT_END; skipping integration test")
         val sul = NetworkSshServerSul("openssh-test", HOST, port)
         try {
