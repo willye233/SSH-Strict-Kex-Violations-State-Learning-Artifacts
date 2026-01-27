@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.Socket
 import java.time.Duration
+import java.time.Instant
 
 @Tag("integration")
 class OpensshIntegrationTest {
@@ -63,6 +65,8 @@ class OpensshIntegrationTest {
 
     @Test
     fun testSendIgnoreAndExtInfo() {
+        // Wait for the OpenSSH service to be reachable before constructing the SUL
+        Assumptions.assumeTrue(waitForPort(HOST, PORT, 30), "OpenSSH not reachable on $HOST:$PORT; skipping integration test")
         val sul = NetworkSshServerSul("openssh-test", HOST, PORT)
         try {
             sul.pre()
@@ -79,5 +83,17 @@ class OpensshIntegrationTest {
             sul.post()
             sul.close()
         }
+    }
+
+    private fun waitForPort(host: String, port: Int, timeoutSeconds: Long): Boolean {
+        val deadline = Instant.now().plusSeconds(timeoutSeconds)
+        while (Instant.now().isBefore(deadline)) {
+            try {
+                Socket(host, port).use { socket -> return true }
+            } catch (_: Exception) {
+                Thread.sleep(500)
+            }
+        }
+        return false
     }
 }
