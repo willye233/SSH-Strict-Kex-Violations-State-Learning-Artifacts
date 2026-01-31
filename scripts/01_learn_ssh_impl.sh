@@ -171,6 +171,36 @@ function ask_retrieve_delay() {
     read -p "    - Enter the retrieve delay (ms) for $SSH_IMPL_NAME: " RETRIEVE_DELAY
 }
 
+function run_symbol_tests() {
+    read -p "Do you want to run symbol unit tests before learning? (y/N) " RUN_UNIT
+    if [[ "$RUN_UNIT" =~ ^[Yy]$ ]]; then
+        if command -v mvn >/dev/null 2>&1; then
+            log "${CYAN}[+] Running unit tests for code/ssh_state_learner...${NC}"
+            mvn -f code/ssh_state_learner test -Dtest=*SshSymbolConstructorTest |& tee -a $LOG_FILE
+            if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+                log "${RED}[!] Unit tests failed. Aborting learning.${NC}"
+                exit 1
+            fi
+        else
+            log "${RED}[!] Maven not found. To run tests locally, run the helper: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+        fi
+    fi
+
+    read -p "Do you want to run integration tests (requires Docker compose up)? (y/N) " RUN_INT
+    if [[ "$RUN_INT" =~ ^[Yy]$ ]]; then
+        if command -v mvn >/dev/null 2>&1; then
+            log "${CYAN}[+] Running integration tests for code/ssh_state_learner (Failsafe profile)...${NC}"
+            mvn -f code/ssh_state_learner -Pintegration-tests verify |& tee -a $LOG_FILE
+            if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+                log "${RED}[!] Integration tests failed. Aborting learning.${NC}"
+                exit 1
+            fi
+        else
+            log "${RED}[!] Maven not found. On Windows use: powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-integration-sshstatelearner.ps1${NC}"
+        fi
+    fi
+}
+
 function learn_ssh_impl() {
     log "${GREEN}[+] Learning SSH implementation state machine...${NC}"
     log "    - Current SSH implementation: $SSH_IMPL_NAME"
@@ -223,4 +253,5 @@ trap 'stop_containers' EXIT
 start_servers
 ask_retrieve_delay
 create_results_dir
+run_symbol_tests
 learn_ssh_impl
