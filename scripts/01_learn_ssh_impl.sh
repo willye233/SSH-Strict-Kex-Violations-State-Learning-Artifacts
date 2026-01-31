@@ -182,7 +182,23 @@ function run_symbol_tests() {
                 exit 1
             fi
         else
-            log "${RED}[!] Maven not found. To run tests locally, run the helper: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            # Try to run the Windows PowerShell bootstrap helper so tests can run without an installed mvn
+            PS_CMD=""
+            if command -v pwsh >/dev/null 2>&1; then
+                PS_CMD="pwsh"
+            elif command -v powershell >/dev/null 2>&1; then
+                PS_CMD="powershell"
+            fi
+            if [[ -z "$PS_CMD" ]]; then
+                log "${RED}[!] Maven not found and PowerShell not available. To run tests manually, run: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            else
+                log "${CYAN}[+] Maven not found. Using $PS_CMD to run the Windows bootstrap helper for unit tests...${NC}"
+                $PS_CMD -NoProfile -ExecutionPolicy Bypass -File .\\run-maven-local.ps1 -Module code/ssh_state_learner -AdditionalArgs 'test -Dtest=*SshSymbolConstructorTest'
+                if [[ $? -ne 0 ]]; then
+                    log "${RED}[!] Unit tests (helper) failed. Aborting.${NC}"
+                    exit 1
+                fi
+            fi
         fi
     fi
 
@@ -196,7 +212,22 @@ function run_symbol_tests() {
                 exit 1
             fi
         else
-            log "${RED}[!] Maven not found. On Windows use: powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            PS_CMD=""
+            if command -v pwsh >/dev/null 2>&1; then
+                PS_CMD="pwsh"
+            elif command -v powershell >/dev/null 2>&1; then
+                PS_CMD="powershell"
+            fi
+            if [[ -z "$PS_CMD" ]]; then
+                log "${RED}[!] Maven not found and PowerShell not available. To run integration tests manually, run: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            else
+                log "${CYAN}[+] Maven not found. Using $PS_CMD to run the Windows bootstrap helper for integration tests...${NC}"
+                $PS_CMD -NoProfile -ExecutionPolicy Bypass -File .\\run-maven-local.ps1 -Module code/ssh_state_learner -AdditionalArgs '-Pintegration-tests verify'
+                if [[ $? -ne 0 ]]; then
+                    log "${RED}[!] Integration tests (helper) failed. Aborting.${NC}"
+                    exit 1
+                fi
+            fi
         fi
     fi
 }
