@@ -130,6 +130,8 @@ abstract class NetworkSshSul(
         LOGGER.trace("Executing symbol: {}", symbol)
         val protocolMessage = symbol.messageConstructor(state.sshContext)
         protocolMessage.getHandler(state.sshContext).preparator.prepare()
+        // Informative log at INFO level to record which symbol the learner is sending.
+        LOGGER.info("Sending symbol: {} (messageId={}) class={}", symbol, symbol.messageId, protocolMessage::class.simpleName)
         sendMessage(protocolMessage)
         return retrieveMessages(retrieveDelay)
     }
