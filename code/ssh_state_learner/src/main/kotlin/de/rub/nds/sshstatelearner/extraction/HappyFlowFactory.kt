@@ -84,13 +84,20 @@ object HappyFlowFactory {
         return if (sulType == SulType.SERVER) when (stage) {
             ProtocolStage.TRANSPORT -> Word.fromSymbols(
                 SshSymbol.MSG_KEXINIT,
+                SshSymbol.MSG_KEXINIT_STRICT_KEX_SERVER,
+                SshSymbol.MSG_KEXINIT_REPEATED,
                 *constructKexFlow(sulType, kex),
+                SshSymbol.MSG_PREMATURE_NEWKEYS,
                 SshSymbol.MSG_NEWKEYS,
+                SshSymbol.MSG_DUPLICATE_NEWKEYS,
                 SshSymbol.MSG_SERVICE_REQUEST_USERAUTH
             )
             ProtocolStage.TRANSPORT_KEX -> Word.fromSymbols(
                 SshSymbol.MSG_KEXINIT,
+                SshSymbol.MSG_KEXINIT_STRICT_KEX_SERVER,
+                SshSymbol.MSG_KEXINIT_REPEATED,
                 *constructKexFlow(sulType, kex),
+                SshSymbol.MSG_PREMATURE_NEWKEYS,
                 SshSymbol.MSG_NEWKEYS
             )
             ProtocolStage.AUTHENTICATION -> Word.fromSymbols(
@@ -105,13 +112,20 @@ object HappyFlowFactory {
         else when (stage) {
             ProtocolStage.TRANSPORT -> Word.fromSymbols(
                 SshSymbol.MSG_KEXINIT,
+                SshSymbol.MSG_KEXINIT_STRICT_KEX_CLIENT,
+                SshSymbol.MSG_KEXINIT_REPEATED,
                 *constructKexFlow(sulType, kex),
+                SshSymbol.MSG_PREMATURE_NEWKEYS,
                 SshSymbol.MSG_NEWKEYS,
+                SshSymbol.MSG_DUPLICATE_NEWKEYS,
                 SshSymbol.MSG_SERVICE_ACCEPT
             )
             ProtocolStage.TRANSPORT_KEX -> Word.fromSymbols(
                 SshSymbol.MSG_KEXINIT,
+                SshSymbol.MSG_KEXINIT_STRICT_KEX_CLIENT,
+                SshSymbol.MSG_KEXINIT_REPEATED,
                 *constructKexFlow(sulType, kex),
+                SshSymbol.MSG_PREMATURE_NEWKEYS,
                 SshSymbol.MSG_NEWKEYS,
             )
             ProtocolStage.AUTHENTICATION -> Word.fromSymbols(

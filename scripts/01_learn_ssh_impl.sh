@@ -171,6 +171,67 @@ function ask_retrieve_delay() {
     read -p "    - Enter the retrieve delay (ms) for $SSH_IMPL_NAME: " RETRIEVE_DELAY
 }
 
+function run_symbol_tests() {
+    read -p "Do you want to run symbol unit tests before learning? (y/N) " RUN_UNIT
+    if [[ "$RUN_UNIT" =~ ^[Yy]$ ]]; then
+        if command -v mvn >/dev/null 2>&1; then
+            log "${CYAN}[+] Running unit tests for code/ssh_state_learner...${NC}"
+            mvn -f code/ssh_state_learner test -Dtest=*SshSymbolConstructorTest |& tee -a $LOG_FILE
+            if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+                log "${RED}[!] Unit tests failed. Aborting learning.${NC}"
+                exit 1
+            fi
+        else
+            # Try to run the Windows PowerShell bootstrap helper so tests can run without an installed mvn
+            PS_CMD=""
+            if command -v pwsh >/dev/null 2>&1; then
+                PS_CMD="pwsh"
+            elif command -v powershell >/dev/null 2>&1; then
+                PS_CMD="powershell"
+            fi
+            if [[ -z "$PS_CMD" ]]; then
+                log "${RED}[!] Maven not found and PowerShell not available. To run tests manually, run: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            else
+                log "${CYAN}[+] Maven not found. Using $PS_CMD to run the Windows bootstrap helper for unit tests...${NC}"
+                $PS_CMD -NoProfile -ExecutionPolicy Bypass -File .\\run-maven-local.ps1 -Module code/ssh_state_learner -AdditionalArgs 'test -Dtest=*SshSymbolConstructorTest'
+                if [[ $? -ne 0 ]]; then
+                    log "${RED}[!] Unit tests (helper) failed. Aborting.${NC}"
+                    exit 1
+                fi
+            fi
+        fi
+    fi
+
+    read -p "Do you want to run integration tests (requires Docker compose up)? (y/N) " RUN_INT
+    if [[ "$RUN_INT" =~ ^[Yy]$ ]]; then
+        if command -v mvn >/dev/null 2>&1; then
+            log "${CYAN}[+] Running integration tests for code/ssh_state_learner (Failsafe profile)...${NC}"
+            mvn -f code/ssh_state_learner -Pintegration-tests verify |& tee -a $LOG_FILE
+            if [[ ${PIPESTATUS[0]} -ne 0 ]]; then
+                log "${RED}[!] Integration tests failed. Aborting learning.${NC}"
+                exit 1
+            fi
+        else
+            PS_CMD=""
+            if command -v pwsh >/dev/null 2>&1; then
+                PS_CMD="pwsh"
+            elif command -v powershell >/dev/null 2>&1; then
+                PS_CMD="powershell"
+            fi
+            if [[ -z "$PS_CMD" ]]; then
+                log "${RED}[!] Maven not found and PowerShell not available. To run integration tests manually, run: ./scripts/run-integration-sshstatelearner.ps1${NC}"
+            else
+                log "${CYAN}[+] Maven not found. Using $PS_CMD to run the Windows bootstrap helper for integration tests...${NC}"
+                $PS_CMD -NoProfile -ExecutionPolicy Bypass -File .\\run-maven-local.ps1 -Module code/ssh_state_learner -AdditionalArgs '-Pintegration-tests verify'
+                if [[ $? -ne 0 ]]; then
+                    log "${RED}[!] Integration tests (helper) failed. Aborting.${NC}"
+                    exit 1
+                fi
+            fi
+        fi
+    fi
+}
+
 function learn_ssh_impl() {
     log "${GREEN}[+] Learning SSH implementation state machine...${NC}"
     log "    - Current SSH implementation: $SSH_IMPL_NAME"
@@ -223,4 +284,5 @@ trap 'stop_containers' EXIT
 start_servers
 ask_retrieve_delay
 create_results_dir
+run_symbol_tests
 learn_ssh_impl
